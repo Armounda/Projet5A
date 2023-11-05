@@ -83,7 +83,7 @@ endif
 #
 
 # Define project name here
-PROJECT = estaca
+PROJECT = projet5A
 
 # Target settings.
 MCU  = cortex-m4
