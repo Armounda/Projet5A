@@ -36,6 +36,7 @@ static void i2scallback(I2SDriver *i2sp) {
 
   if (i2sIsBufferComplete(i2sp)) {
     /* 2nd buffer half processing.*/
+    chprintf((BaseSequentialStream *)&SD2, "TEST \n\r");
   }
   else {
     /* 1st buffer half processing.*/
@@ -68,8 +69,8 @@ static THD_FUNCTION(HELLO1, arg){
   chRegSetThreadName("Hello1");
   while(true){
     //sdWrite(&SD2, (uint8_t*)"Hello World", 11);
-    chprintf((BaseSequentialStream *)&SD2, "TEST = %d\n\r", counter);
-    counter++;
+    //chprintf((BaseSequentialStream *)&SD2, "TEST = %d\n\r", counter);
+    //counter++;
     chThdSleepMilliseconds(500);
   }
 }
