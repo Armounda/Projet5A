@@ -19,6 +19,29 @@
 #include "rt_test_root.h"
 #include "oslib_test_root.h"
 #include "chprintf.h"
+
+//define params fot I2C communication
+#define I2S_BUF_SIZE            256
+static uint16_t i2s_rx_buf[I2S_BUF_SIZE];
+static void i2scallback(I2SDriver *i2sp);
+static const I2SConfig i2scfg = {
+  NULL, //Tx buffer pointer not needed here
+  i2s_rx_buf, // Rx buffer pointer
+  I2S_BUF_SIZE, // Tx and Rx buffer size, 256 here
+  i2scallback, // name of the callback function
+  0,
+  16
+};
+static void i2scallback(I2SDriver *i2sp) {
+
+  if (i2sIsBufferComplete(i2sp)) {
+    /* 2nd buffer half processing.*/
+  }
+  else {
+    /* 1st buffer half processing.*/
+  }
+}
+
 /*
  * Green LED blinker thread, times are in milliseconds.
  */
@@ -37,6 +60,7 @@ static THD_FUNCTION(Thread1, arg) {
   }
 }
 
+//hello world thread
 static THD_WORKING_AREA(waHELLO1, 128);
 static THD_FUNCTION(HELLO1, arg){
 
@@ -70,21 +94,28 @@ int main(void) {
    */
   sdStart(&SD2, NULL);
 
-  /*
-   * Creates the blinker thread.
-   */
+  // Creates the blinker thread.
   chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
+  // create the hello thread
   chThdCreateStatic(waHELLO1, sizeof(waHELLO1), NORMALPRIO, HELLO1, NULL);
+  // init the i2S : starting and configuring the I2S driver 2
+  i2sStart(&I2SD2, &i2scfg);
+  palSetPadMode(GPIOB, 10, PAL_MODE_ALTERNATE(5));
+  palSetPadMode(GPIOC, 3, PAL_MODE_ALTERNATE(5));
 
+  // starting a continuous I2S transfer
+  i2sStartExchange(&I2SD2);
   /*
    * Normal main() thread activity, in this demo it does nothing except
    * sleeping in a loop and check the button state.
    */
   while (true) {
     if (!palReadPad(GPIOC, GPIOC_BUTTON)) {
+      i2sStopExchange(&I2SD2);
       test_execute((BaseSequentialStream *)&SD2, &rt_test_suite);
       test_execute((BaseSequentialStream *)&SD2, &oslib_test_suite);
     }
+
     chThdSleepMilliseconds(500);
   }
 }
