@@ -144,7 +144,6 @@
 #if !defined(HAL_USE_SERIAL) || defined(__DOXYGEN__)
 #define HAL_USE_SERIAL                      TRUE
 #endif
-
 /**
  * @brief   Enables the SERIAL over USB subsystem.
  */

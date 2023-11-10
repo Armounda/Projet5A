@@ -94,6 +94,7 @@ BOARDDIR  := ./board
 CONFDIR  := ./cfg
 BUILDDIR := ./build
 DEPDIR   := ./.dep
+ALPHAESC := ./com_ALPHA_ESC
 
 # Licensing files.
 include $(CHIBIOS)/os/license/license.mk
