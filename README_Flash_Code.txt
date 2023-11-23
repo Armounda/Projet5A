@@ -3,4 +3,5 @@ créer une config de débug (2. create an OpenOCD debug config) ATTENTION, se pl
 Ensuite, 7. OpenOCD on ST-Link, onb nous demande alors d'aller chercher le .cfg de la board. Le chemin est le suivant :
 C:\ChibiStudio\tools\openocd\scripts\board/st_nucleo_f4.cfg
 
+Pour lire les infos en serial USART SD2, la buad rate est de 38400
 Plus qu'a faire flash and run et espérer :)

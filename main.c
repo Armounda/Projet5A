@@ -19,29 +19,7 @@
 #include "rt_test_root.h"
 #include "oslib_test_root.h"
 #include "chprintf.h"
-
-//define params fot I2C communication
-#define I2S_BUF_SIZE            256
-static uint16_t i2s_rx_buf[I2S_BUF_SIZE];
-static void i2scallback(I2SDriver *i2sp);
-static const I2SConfig i2scfg = {
-  NULL, //Tx buffer pointer not needed here
-  i2s_rx_buf, // Rx buffer pointer
-  I2S_BUF_SIZE, // Tx and Rx buffer size, 256 here
-  i2scallback, // name of the callback function
-  0,
-  16
-};
-static void i2scallback(I2SDriver *i2sp) {
-
-  if (i2sIsBufferComplete(i2sp)) {
-    /* 2nd buffer half processing.*/
-    chprintf((BaseSequentialStream *)&SD2, "TEST \n\r");
-  }
-  else {
-    /* 1st buffer half processing.*/
-  }
-}
+#include "string.h"
 
 /*
  * Green LED blinker thread, times are in milliseconds.
@@ -69,11 +47,64 @@ static THD_FUNCTION(HELLO1, arg){
   chRegSetThreadName("Hello1");
   while(true){
     //sdWrite(&SD2, (uint8_t*)"Hello World", 11);
+
     //chprintf((BaseSequentialStream *)&SD2, "TEST = %d\n\r", counter);
-    //counter++;
+    counter++;
     chThdSleepMilliseconds(500);
   }
 }
+
+//Serial Tx thread
+static THD_WORKING_AREA(waTxSerial, 128);
+static THD_FUNCTION(TxSerial, arg){
+  (void)arg;
+  chRegSetThreadName("TxSerial");
+  while(true){
+    sdWrite(&SD6, (uint8_t*)"Hello World", 11);
+    chprintf((BaseSequentialStream *)&SD2, "item was sent \n\r", counter);
+    chThdSleepMilliseconds(1500);
+  }
+}
+//Serial Rx thread
+static THD_WORKING_AREA(waRxSerial,128);
+static THD_FUNCTION(RxSerial, arg){
+  (void)arg;
+  chRegSetThreadName("rxSerial");
+  while(true){
+    //uint8_t token = sdGet(&SD6);
+    char buffer[11];
+    sdRead(&SD6, buffer, sizeof(buffer) - 1);
+
+
+    chprintf((BaseSequentialStream *)&SD2, "reception was checked \n\r");
+    chThdSleepMilliseconds(500);
+  }
+}
+//serial communication functions
+void emmit(char msg[]){
+  sdWrite(&SD6, (uint8_t*)"Hello World", 11);
+
+  //chprintf((BaseSequentialStream *)&SD2, "item was sent \n\r");
+}
+char *recieve(void) {
+    char buffer[12]; // Increase buffer size to accommodate the null-terminator
+    size_t bytesRead = sdRead(&SD6, buffer, sizeof(buffer) - 1);
+    buffer[bytesRead] = '\0'; // Null-terminate the received data
+
+    chprintf((BaseSequentialStream *)&SD2, "reception was checked: %s\n\r", buffer);
+
+    // If the received data is not null-terminated, print each character individually
+    /*if (bytesRead == sizeof(buffer) - 1) {
+        chprintf((BaseSequentialStream *)&SD2, "Received Data: ");
+        for (size_t i = 0; i < bytesRead; ++i) {
+            chprintf((BaseSequentialStream *)&SD2, "%c ", buffer[i]);
+        }
+        chprintf((BaseSequentialStream *)&SD2, "\n\r");
+    }*/
+    chThdSleepMilliseconds(500);
+    return buffer;
+}
+
 
 /*
  * Application entry point.
@@ -93,30 +124,39 @@ int main(void) {
   /*
    * Activates the serial driver 2 using the driver default configuration.
    */
-  sdStart(&SD2, NULL);
+  //CONFIG PINS FOR SERIAL COM
+  // Configuring PC6 as AF8 assigning it to USART6_TX.
+  palSetPadMode(GPIOC, 6, PAL_MODE_ALTERNATE(8));
+  // Configuring PC7 as AF8 assigning it to USART6_RX.
+  palSetPadMode(GPIOC, 7, PAL_MODE_ALTERNATE(8));
+  
+  //starting the serial drivers
+  sdStart(&SD2, NULL); //usb com
+  sdStart(&SD6, NULL); //serial test
 
+  //launchage de threads
   // Creates the blinker thread.
-  chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
+  //chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
   // create the hello thread
-  chThdCreateStatic(waHELLO1, sizeof(waHELLO1), NORMALPRIO, HELLO1, NULL);
-  // init the i2S : starting and configuring the I2S driver 2
-  i2sStart(&I2SD2, &i2scfg);
-  palSetPadMode(GPIOB, 10, PAL_MODE_ALTERNATE(5));
-  palSetPadMode(GPIOC, 3, PAL_MODE_ALTERNATE(5));
+  //chThdCreateStatic(waHELLO1, sizeof(waHELLO1), NORMALPRIO, HELLO1, NULL);
+  // create the serial Tx thread
+  chThdCreateStatic(waTxSerial, sizeof(waTxSerial), NORMALPRIO, TxSerial, NULL);
+  // create the serial Rx thread
+  //chThdCreateStatic(waRxSerial, sizeof(waRxSerial), NORMALPRIO, TxSerial, NULL);
 
-  // starting a continuous I2S transfer
-  i2sStartExchange(&I2SD2);
+
   /*
    * Normal main() thread activity, in this demo it does nothing except
    * sleeping in a loop and check the button state.
    */
   while (true) {
     if (!palReadPad(GPIOC, GPIOC_BUTTON)) {
-      i2sStopExchange(&I2SD2);
-      test_execute((BaseSequentialStream *)&SD2, &rt_test_suite);
-      test_execute((BaseSequentialStream *)&SD2, &oslib_test_suite);
+      //test_execute((BaseSequentialStream *)&SD2, &rt_test_suite);
+      //test_execute((BaseSequentialStream *)&SD2, &oslib_test_suite);
+      chprintf((BaseSequentialStream *)&SD2, "HELLO WORLD\n\r");
     }
-
+    char *test = recieve();
+    //chprintf((BaseSequentialStream *)&SD2, "this table was received : %c %c %c %c\n\r",test[0],test[1],test[2],test[3]);
     chThdSleepMilliseconds(500);
   }
 }
