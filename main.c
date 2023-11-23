@@ -26,6 +26,7 @@
  */
 int counter = 0;
 
+//default blinker thread
 static THD_WORKING_AREA(waThread1, 128);
 static THD_FUNCTION(Thread1, arg) {
 
@@ -60,8 +61,8 @@ static THD_FUNCTION(TxSerial, arg){
   (void)arg;
   chRegSetThreadName("TxSerial");
   while(true){
-    sdWrite(&SD6, (uint8_t*)"Hello World", 11);
-    chprintf((BaseSequentialStream *)&SD2, "item was sent \n\r", counter);
+    //sdWrite(&SD6, (uint8_t*)"Hello World", 11);
+    emmit("Hello World", 11);
     chThdSleepMilliseconds(1500);
   }
 }
@@ -74,36 +75,25 @@ static THD_FUNCTION(RxSerial, arg){
     //uint8_t token = sdGet(&SD6);
     char buffer[11];
     sdRead(&SD6, buffer, sizeof(buffer) - 1);
-
-
     chprintf((BaseSequentialStream *)&SD2, "reception was checked \n\r");
     chThdSleepMilliseconds(500);
   }
 }
+
 //serial communication functions
-void emmit(char msg[]){
-  sdWrite(&SD6, (uint8_t*)"Hello World", 11);
-
-  //chprintf((BaseSequentialStream *)&SD2, "item was sent \n\r");
+void emmit(char *msg, int size){
+  sdWrite(&SD6, (uint8_t*)msg, size);
+  chprintf((BaseSequentialStream *)&SD2, "item %s was sent \n\r",msg);
 }
-char *recieve(void) {
-    char buffer[12]; // Increase buffer size to accommodate the null-terminator
-    size_t bytesRead = sdRead(&SD6, buffer, sizeof(buffer) - 1);
-    buffer[bytesRead] = '\0'; // Null-terminate the received data
-
-    chprintf((BaseSequentialStream *)&SD2, "reception was checked: %s\n\r", buffer);
-
-    // If the received data is not null-terminated, print each character individually
-    /*if (bytesRead == sizeof(buffer) - 1) {
-        chprintf((BaseSequentialStream *)&SD2, "Received Data: ");
-        for (size_t i = 0; i < bytesRead; ++i) {
-            chprintf((BaseSequentialStream *)&SD2, "%c ", buffer[i]);
-        }
-        chprintf((BaseSequentialStream *)&SD2, "\n\r");
-    }*/
+char* recieve(void) {
+    char* buffer = chHeapAlloc(NULL, 12); // Allocate memory on the heap
+    size_t bytesRead = sdRead(&SD6, buffer, 11);
+    buffer[bytesRead] = '\0'; // Add a null terminator to make it a valid C string
+    //chprintf((BaseSequentialStream *)&SD2, "reception was checked: %s\n\r", buffer);
     chThdSleepMilliseconds(500);
     return buffer;
 }
+
 
 
 /*
@@ -156,7 +146,8 @@ int main(void) {
       chprintf((BaseSequentialStream *)&SD2, "HELLO WORLD\n\r");
     }
     char *test = recieve();
-    //chprintf((BaseSequentialStream *)&SD2, "this table was received : %c %c %c %c\n\r",test[0],test[1],test[2],test[3]);
+    chprintf((BaseSequentialStream *)&SD2, "this data was received in main : %s\n\r",test);
+    chHeapFree(test); // Free the allocated memory
     chThdSleepMilliseconds(500);
   }
 }
