@@ -24,36 +24,6 @@
 #include "Middlewares/ST/AI/Inc/ai_platform.h"
 #include "X-CUBE-AI/App/sinus_network.h"
 #include "X-CUBE-AI/App/sinus_network_data.h"
-/*
- * Green LED blinker thread, times are in milliseconds.
- */
-int counter = 0;
-
-static THD_WORKING_AREA(waThread1, 128);
-static THD_FUNCTION(Thread1, arg) {
-
-  (void)arg;
-  chRegSetThreadName("blinker");
-  while (true) {
-    palClearPad(GPIOA, GPIOA_LED_GREEN);
-    chThdSleepMilliseconds(500);
-    palSetPad(GPIOA, GPIOA_LED_GREEN);
-    chThdSleepMilliseconds(500);
-  }
-}
-
-static THD_WORKING_AREA(waHELLO1, 128);
-static THD_FUNCTION(HELLO1, arg){
-
-  (void)arg;
-  chRegSetThreadName("Hello1");
-  while(true){
-    //sdWrite(&SD2, (uint8_t*)"Hello World", 11);
-    chprintf((BaseSequentialStream *)&SD2, "TEST = %d\n\r", counter);
-    counter++;
-    chThdSleepMilliseconds(500);
-  }
-}
 
 /*
  * Application entry point.
@@ -70,16 +40,34 @@ int main(void) {
   halInit();
   chSysInit();
 
+  // IA MANAGMENT
+
+  // declares the variables that will be used
+  char buffer[50];
+  int buff_len = 0;
+  ai_error ai_err;
+  ai_i32 nbatch;
+  uint32_t timestamp;
+  float y_val;
+
+  // chunk of memory used to hold intermediate values for neural network
+  AI_ALIGNED(4) ai_u8 activations[AI_SINUS_NETWORK_DATA_ACTIVATIONS_SIZE];
+
+  //buffers to store inputs and outputs tensors
+  AI_ALIGNED(4) ai_u8 in_data[AI_SINUS_NETWORK_IN_1_SIZE_BYTES];
+  AI_ALIGNED(4) ai_u8 out_data[AI_SINUS_NETWORK_OUT_1_SIZE_BYTES];
+
+  //pointer to the model
+  ai_handle sinus_network_model = AI_HANDLE_NULL;
+
+  //init the wrapper structs that hold the pointers to data and info about the
+  //data (tensot height, width, channels)
+  //ai_buffer ai_input[AI_SINUS_NETWORK_IN_NUM] = AI_SINUS_NETWORK_IN;
+  //ai_buffer ai_output[AI_SINUS_NETWORK_OUT_NUM] = AI_SINUS_NETWORK_OUT;
   /*
    * Activates the serial driver 2 using the driver default configuration.
    */
   sdStart(&SD2, NULL);
-
-  /*
-   * Creates the blinker thread.
-   */
-  chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
-  chThdCreateStatic(waHELLO1, sizeof(waHELLO1), NORMALPRIO, HELLO1, NULL);
 
   /*
    * Normal main() thread activity, in this demo it does nothing except

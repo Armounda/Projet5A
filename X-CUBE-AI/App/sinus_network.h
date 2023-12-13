@@ -37,7 +37,8 @@
 
 AI_DEPRECATED
 #define AI_SINUS_NETWORK_IN \
-  ai_sinus_network_inputs_get(AI_HANDLE_NULL, NULL)
+  {ai_sinus_network_inputs_get(AI_HANDLE_NULL, NULL) \
+  }
 
 #define AI_SINUS_NETWORK_IN_SIZE { \
   AI_SINUS_NETWORK_IN_1_SIZE, \
@@ -55,7 +56,8 @@ AI_DEPRECATED
 
 AI_DEPRECATED
 #define AI_SINUS_NETWORK_OUT \
-  ai_sinus_network_outputs_get(AI_HANDLE_NULL, NULL)
+  {ai_sinus_network_outputs_get(AI_HANDLE_NULL, NULL) \
+  }
 
 #define AI_SINUS_NETWORK_OUT_SIZE { \
   AI_SINUS_NETWORK_OUT_1_SIZE, \
