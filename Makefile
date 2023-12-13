@@ -123,7 +123,8 @@ LDSCRIPT= $(STARTUPLD)/STM32F446xE.ld
 # setting.
 CSRC = $(ALLCSRC) \
        $(TESTSRC) \
-       main.c
+       main.c 
+       
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -153,13 +154,17 @@ CPPWARN = -Wall -Wextra -Wundef
 #
 
 # List all user C define here, like -D_DEBUG=1
-UDEFS =
+UDEFS = 
 
 # Define ASM defines here
 UADEFS =
 
 # List all user directories here
-UINCDIR =
+UINCDIR = Middlewares/ST/AI/Lib Middlewares/ST/AI/Inc X-CUBE-AI/App
+
+# Include the subdirectory custom Makefile
+include Middlewares/ST/AI/Makefile
+include X-CUBE-AI/App/Makefile
 
 # List the user directory to look for the libraries here
 ULIBDIR =

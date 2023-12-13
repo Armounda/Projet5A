@@ -19,6 +19,11 @@
 #include "rt_test_root.h"
 #include "oslib_test_root.h"
 #include "chprintf.h"
+//custom includes for cube IA
+#include "Middlewares/ST/AI/Inc/ai_datatypes_defines.h"
+#include "Middlewares/ST/AI/Inc/ai_platform.h"
+#include "X-CUBE-AI/App/sinus_network.h"
+#include "X-CUBE-AI/App/sinus_network_data.h"
 /*
  * Green LED blinker thread, times are in milliseconds.
  */
